@@ -33,14 +33,12 @@ def send_signal():
 🎯 TP3：{tp3}
 🛡 Stop Loss：{sl}
 """
-    except Exception as e:
-        # 如果 JSON 解析失敗，用純文字處理
-        raw_text = request.get_data(as_text=True)
-        message = f"""📢 TradingView 快訊（格式異常）
+except Exception as e:
+    raw_text = request.get_data(as_text=True)
+    message = raw_text if raw_text else "❌ 無資料"
 
-原始內容如下：
-{raw_text if raw_text else "❌ 無資料"}
-"""
+
+
 
     # 發送訊息到 Telegram
     payload = {
