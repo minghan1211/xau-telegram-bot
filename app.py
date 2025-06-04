@@ -37,7 +37,10 @@ except Exception as e:
     raw_text = request.get_data(as_text=True)
     message = raw_text if raw_text else "❌ 無資料"
 
-    # 發送訊息到 Telegram
+   
+
+
+# 發送訊息到 Telegram
     payload = {
         "chat_id": CHAT_ID,
         "text": message
