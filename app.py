@@ -1,39 +1,51 @@
 from flask import Flask, request
+import os
 import requests
 
 app = Flask(__name__)
 
-BOT_TOKEN = '7972145542:AAGrGpfx8_pdCyJSAIUH-W3XWViGAoUpBzI'
-CHAT_ID = '-1002518915115'
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+CHAT_ID = os.environ.get("CHAT_ID")
+TG_API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
-@app.route('/send-signal', methods=['POST'])
+@app.route("/send-signal", methods=["POST"])
 def send_signal():
-    data = request.get_json()
+    try:
+        data = request.get_json(force=True)
+        symbol = data.get("symbol", "N/A")
+        signal_type = data.get("type", "訊號")
+        time = data.get("time", "N/A")
+        entry = data.get("entry", "N/A")
+        tp1 = data.get("tp1", "N/A")
+        tp2 = data.get("tp2", "N/A")
+        tp3 = data.get("tp3", "N/A")
+        sl = data.get("sl", "N/A")
 
-    signal_type = data.get('type', '訊號')
-    emoji = '📈' if signal_type.upper() == 'BUY' else '📉'
+        message = f"""📢 {symbol} 快訊
 
-    message = f"""
-📢 *XAUUSD 快訊*
+{"📈 Buy" if signal_type == "BUY" else "📉 Sell"} Signal 出現！
 
-{emoji} *{signal_type} Signal 出現！*
+🕰 時間：{time}
+💵 進場價：{entry}
 
-🪙 商品：*{data.get('symbol', 'XAUUSD')}*  
-🕰️ 時間：*{data.get('time', '未提供')}*  
-💵 進場價：*{data.get('entry', '未提供')}*  
+🎯 TP1：{tp1}
+🎯 TP2：{tp2}
+🎯 TP3：{tp3}
+🛡 Stop Loss：{sl}
+"""
+    except Exception as e:
+        # 如果 JSON 解析失敗，用純文字處理
+        raw_text = request.get_data(as_text=True)
+        message = f"""📢 TradingView 快訊（格式異常）
 
-🎯 TP1：*{data.get('tp1', '')}*  
-🎯 TP2：*{data.get('tp2', '')}*  
-🎯 TP3：*{data.get('tp3', '')}*  
-🛡️ Stop Loss：*{data.get('sl', '')}*
+原始內容如下：
+{raw_text if raw_text else "❌ 無資料"}
 """
 
-    telegram_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    # 發送訊息到 Telegram
     payload = {
-        'chat_id': CHAT_ID,
-        'text': message,
-        'parse_mode': 'Markdown'
+        "chat_id": CHAT_ID,
+        "text": message
     }
-
-    response = requests.post(telegram_url, json=payload)
-    return {'ok': True, 'telegram_response': response.json()}
+    requests.post(TG_API_URL, json=payload)
+    return "OK", 200
